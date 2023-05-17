@@ -1,0 +1,435 @@
+---
+title: "Doenças entre Afroamericanos"
+author: "Fernado Bispo, Jeff Caponero"
+format:
+    pdf:
+      toc: true
+      toc-title: Sumário
+      colorlinks: true
+      documentclass: report
+      papersize: letter
+      number-sections: false
+      geometry:
+        - top=30mm
+        - left=30mm
+        - right=20mm
+        - bottom=20mm
+        - heightrounded
+      fig-pos: "H"
+      fig-align: center
+      lang: pt-BR
+      # fontfamily: libertinus
+      fontsize: 12pt
+      include-in-header:
+      - text: |
+          \usepackage{caption}
+          \usepackage{fontspec}
+          \usepackage{xcolor}
+          \usepackage{indentfirst}
+          \captionsetup[table]{name=Tabela}
+---
+
+```{r pacotes}
+#| echo: false
+#| warning: false
+
+
+# PACOTES ----
+
+if (!require(pacman)) install.packages("pacman")
+
+pacman::p_load(tidyverse,  janitor, stargazer,  sjmisc, summarytools,
+               kableExtra, moments, ggpubr, formattable, gridExtra, 
+               glue, corrplot, sessioninfo, readxl, writexl, ggthemes,
+               patchwork,  plotly, lmtest, olsrr, gglm, ggplot2,
+               tidymodels, GGally, skimr, performance)
+
+summarytools::st_options(lang = "pt")
+options(OutDec=",") 
+
+``` 
+
+
+```{r dados4}
+#| echo: false
+#| warning: false
+
+## Dados 2 - Import ----
+dados2 <- read.csv2("Dados2.csv")
+
+### Arrumação ----
+dados2 <- dados2|>
+  janitor::clean_names()
+
+# Transformando as variaveis e mudando as unidades de medida.
+dados3 <- dados2|>
+  select(-bp_2s, -bp_2d, -time_ppn, - frame)|>
+  mutate(
+    height = height*0.0254,
+    weight = weight*0.453592,
+    waist = waist*2.54,
+    hip = hip*2.54,
+    gender = forcats::as_factor(gender)
+  )
+
+# Removendo variaveis categóricas e linhas contendo NAs
+dados4 <- dados3|>
+  select(-gender, -location)
+
+dados4 <- dados4|>stats::na.omit()
+
+
+
+```
+
+
+## Introdução
+
+O conjunto de dados a ser analisado, contém informações de 403 afro-americanos residentes no Estado da Virginia (EUA), entrevistados em um estudo referente à prevalência de obesidade, diabetes e outros fatores de risco cardiovasculares. As características apresentadas são:
+
+- Colesterol total;
+- Glicose estabilizada;
+- Lipoproteína de alta densidade (colesterol bom);
+- Razão colesterol total e colesterol bom;
+- Hemoglobina glicada;
+- Município de residência (Buckingham ou Louisa);
+- Idade (em anos);
+- Sexo;
+- Altura (em polegadas);
+- Peso (em libras);
+- Pressão sanguínea sistólica (1ª medida);
+- Pressão sanguínea diastólica (1ª medida);
+- Pressão sanguínea sistólica (2ª medida);
+- Pressão sanguínea diastólica (2ª medida);
+- Cintura (em polegadas);
+- Quadril (em polegadas). 
+
+Com base nestes dados se desenvolverá nesta segunda parte:
+
+1. Nova análise descritiva e exploratória dos dados (apenas das variáveis quantitativas), incluindo visualização de dados.  
+2. Determinação da equação do modelo ajustado e interpretação os seus coeficientes.  
+3. Condução de testes para determinar quais variáveis são estatisticamente significantes ao nível de significância de 5%.  
+4. Obtenção de um quadro da análise de variância e de resultado do teste F a fim de avaliar a bondade do ajuste do modelo.  
+5. Obtenção do coeficiente de determinação e do 
+coeficiente de determinação ajustado do modelo.  
+6. Apresentação dos gráficos de diagnóstico para:
+(a) Valores Ajustados e Resíduos Studentizado;  
+(b) Gráfico Quantil-Quantil;  
+(c) Gráfico de Distância de Cook;  
+(d) Gráfico dos pontos de Alavanca e Resíduo Studentizado;  
+(e) Gráfico de DfBeta;   
+(f) Gráfico de DfFit;  
+(g) Gráfico do COVRatio.  
+
+## Resultados
+
+### Análise descritiva dos dados
+
+Numa primeira análise do conjunto de dados se constatou que as características **Pressão sanguínea sistólica (2ª medida)** e **Pressão sanguínea diastólica (2ª medida)** possuem uma quantidade muito grande de dados ausentes, cerca de 65% de ausência de dados, ou seja, das 403 observações coletadas, 262 estão ausentes para estas características, diante desta grande falta de dados essas características serão descartadas.
+
+Se constatou também que as observações das características **altura, peso, cintura** e **quadril** estão representadas em unidades do Sistema Imperial, diferentes das praticadas no Brasil, sendo necessária a conversão para o Sistema Internacional, a fim de facilitar a interoperabilidade para a nossa realidade cotidiana.
+Para tanto as características que possuem medidas originais em **polegadas (in), libras (lb), polegadas (in) e polegadas (in)** respectivamente, foram convertidas para **metro (m), quilograma (kg), centímetro (cm) e centímetro (cm)** respectivamente.
+
+Sendo parte primordial para qualquer estudo, a fase exploratória dos dados está representada inicialmente na Tabela 8 com a sumarização das características em análise.
+
+
+```{r tab1:MedRes}
+#| echo: false
+#| warning: false
+
+dados4|>
+  # select(-time_ppn, - frame)|>
+  rename(
+    "Colesterol total" = chol,
+    "Glicose estabilizada" = stab_glu,
+    "Lipoproteína de alta densidade" = hdl,
+    "Razão colesterol total e colesterol bom" = ratio,
+    "Hemoglobina glicada" = glyhb,
+    "Idade" = age,
+    "Altura" = height, "Peso" = weight,
+    "Pressão sanguínea sistólica (1ª medida)" = bp_1s,
+    "Pressão sanguínea diastólica (1ª medida)" = bp_1d,
+    "Cintura" = waist, "Quadril" = hip
+  )|>
+  summarytools::descr(
+    stats = c("min", "q1", "med", "mean","q3", "max",  "sd", "cv", "Skewness", "Kurtosis"),
+    justify = "c",
+    style = "rmarkdown",
+    transpose = T
+  )|>
+  kbl(
+    caption = "Medidas Resumo dos dados",
+    digits = 2,
+    format.args=list(big.mark=".", decimal.mark=","),
+    align = "c", 
+    row.names = T, 
+    booktabs = T
+  )|>
+  column_spec(1, bold = T)|>
+  kable_styling(
+    full_width = F,
+    position = 'center', 
+    latex_options = c("striped", "HOLD_position", "scale_down")
+  )|>
+  kable_material()
+```
+
+
+Desta análise inicial, verifica-se que a distribuição das variáveis não apresenta fatores impeditivos da regressão linear a que nos propomos.
+
+Pode-se realizar a análise de disperção dos dados por meio de gráficos do tipo BoxPlot, como se vê na Figura 1.
+
+```{r fig3:BoxPlot2}
+#| echo: false
+#| warning: false
+#| fig-height: 9
+#| fig-width: 7
+
+# BoxPlot ----
+{
+## b1 volume ----
+b1 <- dados3|>
+  ggplot(aes(y = chol)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Colesterol Total",
+    x = "",
+    y = "µg/L"
+  )+theme_minimal(base_size = 7.5)
+
+## b2 glicose ----
+b2 <- dados3|>
+  ggplot(aes(y = stab_glu)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Glicose Estabilizada",
+    x = "",
+    y = "µg/L"
+  )+theme_minimal(base_size = 7.5)
+
+## b3 hdl ----
+b3 <- dados3|>
+  ggplot(aes(y = hdl)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "HDL",
+    x = "",
+    y = "µg/L"
+  )+theme_minimal(base_size = 7.5)
+
+## b4 ratio ----
+b4 <- dados3|>
+  ggplot(aes(y = ratio)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Razão Col. Total?HDL",
+    x = "",
+    y = "Razão"
+  )+theme_minimal(base_size = 7.5)
+
+## b5 glyhb ----
+b5 <- dados3|>
+  ggplot(aes(y = glyhb)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Hemoglobina Gliacada",
+    x = "",
+    y = "µg/L"
+  )+theme_minimal(base_size = 7.5)
+
+## b6 idade ----
+b6 <- dados3|>
+  ggplot(aes(y = age)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Idade",
+    x = "",
+    y = "Anos"
+  )+theme_minimal(base_size = 7.5)
+     
+## b7 altura ----
+b7 <- dados3|>
+  ggplot(aes(y = height)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Altura",
+    x = "",
+    y = "Centímetros"
+  )+theme_minimal(base_size = 7.5)
+
+## b8 Peso ----
+b8 <- dados3|>
+  ggplot(aes(y = weight)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Peso",
+    x = "",
+    y = "Quilogramas"
+  )+theme_minimal(base_size = 7.5)
+
+## b9 bo_1s ----
+b9 <- dados3|>
+  ggplot(aes(y = bp_1s)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "P. Sistólica (1ª)",
+    x = "",
+    y = "mmHg"
+  )+theme_minimal(base_size = 7.5)
+
+## b10 bp_1d ----
+b10 <- dados3|>
+  ggplot(aes(y = bp_1d)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "P. Diastólica (1ª)",
+    x = "",
+    y = "mmHg"
+  )+theme_minimal(base_size = 7.5)
+
+## b11 waist ----
+b11 <- dados3|>
+  ggplot(aes(y = waist)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Cintura",
+    x = "",
+    y = "Centímetros"
+  )+theme_minimal(base_size = 7.5)
+
+## b12 hip ----
+b12 <- dados3|>
+  ggplot(aes(y = hip)) +
+  geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
+  labs(
+    title = "Quadril",
+    x = "",
+    y = "Centímetros"
+  )+theme_minimal(base_size = 7.5)
+
+b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10 + b11 + b12 +  
+  plot_layout(ncol = 3) + 
+  plot_annotation(
+    title = "Figura 1: BoxPlot das variáveis em análise.") &
+    # # theme = theme_minimal(plot.title = element_text(size = 10)),
+    # tag_levels = c("A", "1"), tag_prefix = "Sub Fig. ", tag_sep = ".",
+    # tag_suffix = ":") &
+  theme(
+    plot.tag.position = c(0, 1),
+    plot.tag = element_text(size = 5.5, hjust = 0, vjust = -0.4))
+}
+
+```
+
+
+Pode-se verificar pela Figura 1 que há diversos valores atipicos (*outlayers*), entretanto sem conhecimento especializado da fisiologia é temerário prescindir destas observações. Por outro lado, é possivel realizar uma análise estatística destes valores de forma a indicar aqueles tem maior influência sobre o modelo proposto e assim viabilizar um tratamento mais adequado a cada um deles. Este tratamento será realizado por meio de gráficos diagnósticos ao final deste estudo.
+
+### Regressão Linear Múltipla
+
+Com base na proposta da coleta de dados, a característica que apresenta melhor adequação para ser a variável resposta de um modelo de regressão é o **peso**, pois intuitivamente é a que apresenta melhor correlação. Desta forma, será feita a avaliação dessa característica com as demais a fim de se identificar as possíveis correlações intuídas.
+
+
+```{r ajuste_mod}
+#| echo: false
+#| warning: false
+
+
+### Ajuste do modelo ----
+# Com remoção de NAs
+mFit4.0sna <- lm(weight ~  chol + stab_glu + hdl + ratio + glyhb + age + height + bp_1s + bp_1d + waist + hip, data = dados4)
+
+mFit4.1sna <- lm(weight ~  chol + stab_glu + hdl + age + height + bp_1s + bp_1d + waist + hip, data = dados4)
+```
+
+
+
+```{r tab:model_sig_com_nas}
+#| echo: false
+#| warning: false
+
+
+# Modelo completo
+fit_anova4_sna <- broom::tidy(anova(mFit4.0sna))
+
+fit_anova4_sna<- fit_anova4_sna|>
+  mutate(
+    sumsq = scales::number(
+      sumsq, accuracy = 0.0010,
+      big.mark = ".", decimal.mark = ","),
+    meansq = scales::number(
+      meansq, accuracy = 0.0001,
+      big.mark = ".", decimal.mark = ","),
+    statistic = scales::number(
+      statistic, accuracy = 0.0001,
+      big.mark = ".", decimal.mark = ","),
+    p.value = scales::number(
+      p.value, accuracy = 0.0001,
+      big.mark = ".", decimal.mark = ","))
+
+fit_anova4_sna[is.na(fit_anova4_sna)] <- ""
+
+fit_anova4_sna$term <- c("Colesterol total", "Glicose estabilizada",
+                     "Lipoproteína de alta densidade", 
+                     "Razão colesterol total e colesterol bom", 
+                     "Hemoglobina glicada", "Idade" , "Altura", 
+                     "Pressão sanguínea sistólica (1ª medida)", 
+                     "Pressão sanguínea diastólica (1ª medida)", 
+                     "Cintura",  "Quadril", "Resíduos")
+
+
+
+
+for (i in 1:12){
+  if (fit_anova4_sna[i,6]=="0,0000") {
+    fit_anova4_sna[i,6] = "<0,0001"
+  }  
+}
+
+
+
+# Criação da tabela
+
+fit_anova4_sna|>
+  kableExtra::kbl(
+    caption = "Análise de Variância (ANOVA).",
+    format.args=list(big.mark=".", decimal.mark=","),
+    digits = 3, align = c("l", "c", "c", "c", "c", "c"), 
+    row.names = F, booktabs = T, escape = F,
+    col.names = c("", "$GL^1$", "Soma de Quadrados", "Quadrado Médio", "Estatística F-Snedecor", "p-valor")
+  )|>
+  kable_styling(
+    full_width = F, position = 'center', 
+    latex_options = c("striped", "HOLD_position", "repeat_header", "scale_down")
+  )|>
+  footnote(
+    number = c("GL: Graus de Liberdade"),
+    number_title = "Legenda:",
+    footnote_as_chunk = F
+  )|>
+  column_spec(1, bold = T)|>
+  # column_spec(6, bold = T, color = ifelse(fit_anova3_cna$p.value < 0.05, "green", "red"))|>
+  kable_material()
+```
+
+
+
+A análise da Tabela 2 permite avaliar que apenas para a razão colesterol total e colesterol bom e para a Hemoglobina glicada o peso do paciente está relacionado aos resultados obtidos de forma significativa. Para todos os demais a correlação não é evidente.
+O modelo obtido pode ser representado por:
+
+
+$Y_{i}=$ `r round(mFit4.0sna$coefficients[1],3)` $\ + \ $ `r round(mFit4.0sna$coefficients[2],3)` $X_{1i} +$ `r round(mFit4.0sna$coefficients[3],3)` $X_{2i}+$ `r round(mFit4.0sna$coefficients[4],3)` $X_{3i}+$ `r round(mFit4.0sna$coefficients[5],3)` $X_{4i}+$ `r round(mFit4.0sna$coefficients[6],3)` $X_{5i}+$ `r round(mFit4.0sna$coefficients[7],3)` $X_{6i}+$ `r round(mFit4.0sna$coefficients[8],3)` $X_{7i}+$ `r round(mFit4.0sna$coefficients[9],3)` $X_{8i}+$ `r round(mFit4.0sna$coefficients[10],3)` $X_{9i}+$ `r round(mFit4.0sna$coefficients[11],3)` $X_{10i}+$ `r round(mFit4.0sna$coefficients[12],3)` $X_{11i}$  
+
+
+Onde:  
+$Y_{i}$ - Peso;  
+$X_{1i}$ - Colesterol total;  
+$X_{2i}$ - Glicose estabilizada;  
+$X_{3i}$ - Lipoproteína de alta densidade (colesterol bom);  
+$X_{4i}$ - Razão colesterol total e colesterol bom;  
+$X_{5i}$ - Hemoglobina glicada;  
+$X_{6i}$ - Idade (em anos);  
+$X_{7i}$ - Altura (em polegadas);  
+$X_{8i}$ - Pressão sanguínea sistólica (1ª medida);  
+$X_{9i}$ - Pressão sanguínea diastólica (1ª medida);  
+$X_{10i}$ - Cintura (em polegadas);  
+$X_{11i}$ - Quadril (em polegadas).   
