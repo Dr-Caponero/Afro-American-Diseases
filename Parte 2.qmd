@@ -78,14 +78,12 @@ dados4 <- dados3|>
 
 dados4 <- dados4|>stats::na.omit()
 
-
-
 ```
 
 
 ## Introdução
 
-O conjunto de dados a ser analisado, contém informações de 403 afro-americanos residentes no Estado da Virginia (EUA), entrevistados em um estudo referente à prevalência de obesidade, diabetes e outros fatores de risco cardiovasculares. As características apresentadas são:
+O conjunto de dados a ser analisado, o mesmo trabalhado na parte 1 deste relatório, contém informações de 403 afro-americanos residentes no Estado da Virginia (EUA), entrevistados em um estudo referente à prevalência de obesidade, diabetes e outros fatores de risco cardiovasculares. As características apresentadas são:
 
 - Colesterol total;
 - Glicose estabilizada;
@@ -95,14 +93,14 @@ O conjunto de dados a ser analisado, contém informações de 403 afro-americano
 - Município de residência (Buckingham ou Louisa);
 - Idade (em anos);
 - Sexo;
-- Altura (em polegadas);
+- Altura (em cemtimetros);
 - Peso (em libras);
 - Pressão sanguínea sistólica (1ª medida);
 - Pressão sanguínea diastólica (1ª medida);
 - Pressão sanguínea sistólica (2ª medida);
 - Pressão sanguínea diastólica (2ª medida);
-- Cintura (em polegadas);
-- Quadril (em polegadas). 
+- Cintura (em cemtimetros);
+- Quadril (em cemtimetros). 
 
 Com base nestes dados se desenvolverá nesta segunda parte:
 
@@ -125,12 +123,12 @@ coeficiente de determinação ajustado do modelo.
 
 ### Análise descritiva dos dados
 
-Numa primeira análise do conjunto de dados se constatou que as características **Pressão sanguínea sistólica (2ª medida)** e **Pressão sanguínea diastólica (2ª medida)** possuem uma quantidade muito grande de dados ausentes, cerca de 65% de ausência de dados, ou seja, das 403 observações coletadas, 262 estão ausentes para estas características, diante desta grande falta de dados essas características serão descartadas.
+As análises prévias (primeira parte deste relatório) permitiram determinar que:   
+1- As características **Pressão sanguínea sistólica (2ª medida)** e **Pressão sanguínea diastólica (2ª medida)** possuem uma quantidade muito grande de dados ausentes, cerca de 65% de ausência de dados, portanto essas características foram descartadas.   
 
-Se constatou também que as observações das características **altura, peso, cintura** e **quadril** estão representadas em unidades do Sistema Imperial, diferentes das praticadas no Brasil, sendo necessária a conversão para o Sistema Internacional, a fim de facilitar a interoperabilidade para a nossa realidade cotidiana.
-Para tanto as características que possuem medidas originais em **polegadas (in), libras (lb), polegadas (in) e polegadas (in)** respectivamente, foram convertidas para **metro (m), quilograma (kg), centímetro (cm) e centímetro (cm)** respectivamente.
+2- Se constatou também que as observações das características **altura, peso, cintura** e **quadril** estão representadas em unidades do Sistema Imperial, que foram convertidas o Sistema Internacional.  
 
-Sendo parte primordial para qualquer estudo, a fase exploratória dos dados está representada inicialmente na Tabela 8 com a sumarização das características em análise.
+Nesta etapa, foi realizada outra análise exploratória dos dados, levando-se em conta apenas as variáveis quantitativas, que está representada  na Tabela 1.  
 
 
 ```{r tab1:MedRes}
@@ -147,8 +145,8 @@ dados4|>
     "Hemoglobina glicada" = glyhb,
     "Idade" = age,
     "Altura" = height, "Peso" = weight,
-    "Pressão sanguínea sistólica (1ª medida)" = bp_1s,
-    "Pressão sanguínea diastólica (1ª medida)" = bp_1d,
+    "Pressão sanguínea sistólica" = bp_1s,
+    "Pressão sanguínea diastólica" = bp_1d,
     "Cintura" = waist, "Quadril" = hip
   )|>
   summarytools::descr(
@@ -175,9 +173,9 @@ dados4|>
 ```
 
 
-Desta análise inicial, verifica-se que a distribuição das variáveis não apresenta fatores impeditivos da regressão linear a que nos propomos.
+Desta análise, verifica-se que a distribuição das variáveis não apresenta fatores impeditivos da regressão linear a que nos propomos.  
 
-Pode-se realizar a análise de disperção dos dados por meio de gráficos do tipo BoxPlot, como se vê na Figura 1.
+Pode-se ainda complementar este estudo por meio de uma análise de disperção dos dados por meio de gráficos do tipo BoxPlot, como se vê na Figura 1.  
 
 ```{r fig3:BoxPlot2}
 #| echo: false
@@ -194,7 +192,7 @@ b1 <- dados3|>
   labs(
     title = "Colesterol Total",
     x = "",
-    y = "µg/L"
+    y = "µg/mL"
   )+theme_minimal(base_size = 7.5)
 
 ## b2 glicose ----
@@ -204,7 +202,7 @@ b2 <- dados3|>
   labs(
     title = "Glicose Estabilizada",
     x = "",
-    y = "µg/L"
+    y = "µg/mL"
   )+theme_minimal(base_size = 7.5)
 
 ## b3 hdl ----
@@ -214,7 +212,7 @@ b3 <- dados3|>
   labs(
     title = "HDL",
     x = "",
-    y = "µg/L"
+    y = "µg/mL"
   )+theme_minimal(base_size = 7.5)
 
 ## b4 ratio ----
@@ -222,7 +220,7 @@ b4 <- dados3|>
   ggplot(aes(y = ratio)) +
   geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
   labs(
-    title = "Razão Col. Total?HDL",
+    title = "Razão Col. Total/HDL",
     x = "",
     y = "Razão"
   )+theme_minimal(base_size = 7.5)
@@ -234,7 +232,7 @@ b5 <- dados3|>
   labs(
     title = "Hemoglobina Gliacada",
     x = "",
-    y = "µg/L"
+    y = "µg/mL"
   )+theme_minimal(base_size = 7.5)
 
 ## b6 idade ----
@@ -272,7 +270,7 @@ b9 <- dados3|>
   ggplot(aes(y = bp_1s)) +
   geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
   labs(
-    title = "P. Sistólica (1ª)",
+    title = "P. Sistólica",
     x = "",
     y = "mmHg"
   )+theme_minimal(base_size = 7.5)
@@ -282,7 +280,7 @@ b10 <- dados3|>
   ggplot(aes(y = bp_1d)) +
   geom_boxplot(col="darkblue", fill="skyblue", alpha = 0.5)+
   labs(
-    title = "P. Diastólica (1ª)",
+    title = "P. Diastólica",
     x = "",
     y = "mmHg"
   )+theme_minimal(base_size = 7.5)
@@ -324,9 +322,149 @@ b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10 + b11 + b12 +
 
 Pode-se verificar pela Figura 1 que há diversos valores atipicos (*outlayers*), entretanto sem conhecimento especializado da fisiologia é temerário prescindir destas observações. Por outro lado, é possivel realizar uma análise estatística destes valores de forma a indicar aqueles tem maior influência sobre o modelo proposto e assim viabilizar um tratamento mais adequado a cada um deles. Este tratamento será realizado por meio de gráficos diagnósticos ao final deste estudo.
 
-### Regressão Linear Múltipla
+### Modelo de Regressão Linear Multipla  
 
-Com base na proposta da coleta de dados, a característica que apresenta melhor adequação para ser a variável resposta de um modelo de regressão é o **peso**, pois intuitivamente é a que apresenta melhor correlação. Desta forma, será feita a avaliação dessa característica com as demais a fim de se identificar as possíveis correlações intuídas.
+O modelo obtido pode ser representado por:
+
+```{r }
+#| echo: false
+#| warning: false
+
+n <- length(dados4$weight)
+Y <- as.matrix(dados4$weight)
+X <- as.matrix(dados4[,-8])
+betas <- (solve(t(X) %*% X)) %*% t(X) %*% Y
+H = X %*% (solve(t(X) %*% X)) %*% t(X)
+J <- matrix(1,n,n)
+SQRes <- t(Y) %*% Y - t(betas) %*% t(X) %*% Y
+SQReg <- t(betas) %*% t(X) %*% Y - (1/n)*t(Y) %*% J %*% Y
+SQTot <- SQReg + SQRes
+
+R2 <- round(SQReg/SQTot,3)
+R2_aju <- round(1 - (SQRes/(n - 12))/(SQTot/(n -1)),3)
+```
+
+
+$Y_{i}=$ `r round(betas[1],3)` $X_{1i} +$ `r round(betas[2],3)` $X_{2i}$ `r round(betas[3],3)` $X_{3i}$ `r round(betas[4],3)` $X_{4i}$ `r round(betas[5],3)` $X_{5i}$ `r round(betas[6],3)` $X_{6i}+$ `r round(betas[7],3)` $X_{7i}$ `r round(betas[8],3)` $X_{8i}+$ `r round(betas[9],3)` $X_{9i}+$ `r round(betas[10],3)` $X_{10i}+$ `r round(betas[11],3)` $X_{11i}$   
+
+Onde:    
+$Y_{i}$ - Peso;  
+$X_{1i}$ - Colesterol total;  
+$X_{2i}$ - Glicose estabilizada;  
+$X_{3i}$ - Lipoproteína de alta densidade;  
+$X_{4i}$ - Razão colesterol total e colesterol bom;  
+$X_{5i}$ - Hemoglobina glicada;  
+$X_{6i}$ - Idade;  
+$X_{7i}$ - Altura;  
+$X_{8i}$ - Pressão sanguínea sistólica;  
+$X_{9i}$ - Pressão sanguínea diastólica;  
+$X_{10i}$ - Cintura;  
+$X_{11i}$ - Quadril.   
+
+Interpretando-se o modelo pode-se dizer que para cada variável, fixadas as demais condições (_Ceteris Paribus_), temos que o peso dos indivíduos aumenta 15g a cada 1 µg/mL de colesterol total; aumenta 21g a cada 1 µg/mL de glicose estabilizada; reduz 187g a cada 1 µg/mL de lipoproteína de alta densidade; reduz 975g a cada unidade da razão colesterol total e colesterol bom; reduz 240g a cada 1 µg/mL Hemoglobina glicada; reduz 164g a cada ano de idade do indivíduo; aumenta 1.107g a cada centimetro da altura do indivíduo; reduz 69g a cada 1 mmHg de pressão sanguínea sistólica; aumenta 46g a cada 1 mmHg de pressão sanguínea diastólica; aumenta 726g a cada centimetro no perímetro da cintura e aumenta 295g a cada cemtimetro no perímetro do quadril do indivíduo.  
+Neste modelo o coeficiente de determinação calculado foi de $R^2=$ `r R2`, o que denota que `r R2*100`% da variância dos dados é explicada pelo modelo. Pode-se calcular o coeficiente de determinação ajustado igual a $R^2_a=$ `r R2_aju`.  
+
+Da equação do modelo já se identifica que há fortes indícios de que a variável $X_{1i}$ (Colesterol Total) não apresenta qualquer significância para o ajuste do modelo. Desta forma, é conveniente avaliar a significância estatística de cada uma das variáveis a um nível de significância de 5%.
+
+
+### Variáveis Estatisticamente Significantes
+
+
+Considerando um teste de hipótese para os parâmetros individuais do modelo podemos avaliar se: 
+
+$$ H_0 : \beta_j = 0$$ 
+$$H_1 : \beta_j \ne 0$$
+
+Utilizando a estatística teste dada por:
+
+$$t= \dfrac{\hat \beta_j - \beta_j}{ep(\hat \beta_j)}$$
+Com base no valor tabelado de $t_{(2,5\%,365)}=$ `r round(qt(0.025, n-12), 3)` e realizados os calculos verificou-se os seguintes valores da estatística t:  
+
+```{r }
+#| echo: false
+#| warning: false
+
+
+sigma2_hat <- SQRes/(n-12)
+ep_betas <- sqrt(sigma2_hat*diag(solve(t(X) %*% X)))
+t <- t(betas)/ep_betas
+# k <- 1
+# rejeito <- NULL
+# for (i in 1:11){
+#   if (abs(t[i])> abs(qt(0.025,n-12))) {
+#     rejeito[k] = i
+#     k <- k + 1
+#   }
+# }
+t <-  as.data.frame(t(t))
+
+rownames(t) <-  c("Colesterol total", "Glicose estabilizada", 
+                  "Lipoproteína de alta densidade", 
+                  "Razão colesterol total e colesterol bom", 
+                  "Hemoglobina glicada", "Idade", "Altura", 
+                  "Pressão sanguínea sistólica",
+                  "Pressão sanguínea diastólica",
+                  "Cintura","Quadril")
+t|>
+ kbl(
+    caption = "Análise de Significância",
+    digits = 3,
+    format.args=list(big.mark=".", decimal.mark=","),
+    align = "c", 
+    col.names = "Estatística t",
+    row.names = T, 
+    booktabs = T
+  )|>
+  column_spec(1, bold = T)|>
+  kable_styling(
+    full_width = F,
+    position = 'center', 
+    latex_options = c("striped", "HOLD_position")
+  )|>
+  kable_material()
+```
+
+
+Nota-se, desta forma, que as seguintes variáveis não se mostraram estatisticamente significantes ao nível de significancia de 5%: Lipoproteína de alta densidade; Idade; Pressão sanguínea sistólica; Cintura e Quadril.   
+
+Um novo modelo sem essas variáveis pode ser representado por:
+
+```{r }
+#| echo: false
+#| warning: false
+
+n <- length(dados4$weight)
+Y <- as.matrix(dados4$weight)
+X <- as.matrix(dados4[,-c(3, 6, 8, 9, 11, 12)])
+betas <- (solve(t(X) %*% X)) %*% t(X) %*% Y
+H = X %*% (solve(t(X) %*% X)) %*% t(X)
+J <- matrix(1,n,n)
+SQRes <- t(Y) %*% Y - t(betas) %*% t(X) %*% Y
+SQReg <- t(betas) %*% t(X) %*% Y - (1/n)*t(Y) %*% J %*% Y
+SQTot <- SQReg + SQRes
+
+R2 <- round(SQReg/SQTot,3)
+R2_aju <- round(1 - (SQRes/(n - 12))/(SQTot/(n -1)),3)
+```
+
+
+$Y_{i}=$ `r round(betas[1],3)` $X_{1i}^* +$ `r round(betas[2],3)` $X_{2i}^*+$ `r round(betas[3],3)` $X_{3i}^*+$ `r round(betas[4],3)` $X_{4i}^*+$ `r round(betas[5],3)` $X_{5i}^*+$ `r round(betas[6],3)` $X_{6i}^*$ 
+
+Onde:    
+$Y_{i}$ - Peso;  
+$X_{1i}^*$ - Colesterol total;  
+$X_{2i}^*$ - Glicose estabilizada;  
+$X_{3i}^*$ - Razão colesterol total e colesterol bom;  
+$X_{4i}^*$ - Hemoglobina glicada;  
+$X_{5i}^*$ - Altura;  
+$X_{6i}^*$ - Pressão sanguínea diastólica.  
+
+
+
+
+### Análise de Variâncias
+
+Realizando uma análise de variância com as variáveis significativas, é possível apresentar a tabela abaixo.  
 
 
 ```{r ajuste_mod}
@@ -336,9 +474,8 @@ Com base na proposta da coleta de dados, a característica que apresenta melhor 
 
 ### Ajuste do modelo ----
 # Com remoção de NAs
-mFit4.0sna <- lm(weight ~  chol + stab_glu + hdl + ratio + glyhb + age + height + bp_1s + bp_1d + waist + hip, data = dados4)
+mFit4.0sna <- lm(weight ~  chol + stab_glu + ratio + glyhb + height + bp_1d, data = dados4)
 
-mFit4.1sna <- lm(weight ~  chol + stab_glu + hdl + age + height + bp_1s + bp_1d + waist + hip, data = dados4)
 ```
 
 
@@ -349,7 +486,7 @@ mFit4.1sna <- lm(weight ~  chol + stab_glu + hdl + age + height + bp_1s + bp_1d 
 
 
 # Modelo completo
-fit_anova4_sna <- broom::tidy(anova(mFit4.0sna))
+fit_anova4_sna<- broom::tidy(anova(mFit4.0sna))
 
 fit_anova4_sna<- fit_anova4_sna|>
   mutate(
@@ -369,17 +506,12 @@ fit_anova4_sna<- fit_anova4_sna|>
 fit_anova4_sna[is.na(fit_anova4_sna)] <- ""
 
 fit_anova4_sna$term <- c("Colesterol total", "Glicose estabilizada",
-                     "Lipoproteína de alta densidade", 
                      "Razão colesterol total e colesterol bom", 
-                     "Hemoglobina glicada", "Idade" , "Altura", 
-                     "Pressão sanguínea sistólica (1ª medida)", 
+                     "Hemoglobina glicada", "Altura", 
                      "Pressão sanguínea diastólica (1ª medida)", 
-                     "Cintura",  "Quadril", "Resíduos")
+                      "Resíduos")
 
-
-
-
-for (i in 1:12){
+for (i in 1:7){
   if (fit_anova4_sna[i,6]=="0,0000") {
     fit_anova4_sna[i,6] = "<0,0001"
   }  
@@ -413,23 +545,98 @@ fit_anova4_sna|>
 
 
 
-A análise da Tabela 2 permite avaliar que apenas para a razão colesterol total e colesterol bom e para a Hemoglobina glicada o peso do paciente está relacionado aos resultados obtidos de forma significativa. Para todos os demais a correlação não é evidente.
-O modelo obtido pode ser representado por:
+A análise da Tabela 3 permite avaliar que apenas para a razão colesterol total e colesterol bom e para a altura o peso do paciente está relacionado aos resultados obtidos de forma significativa. Para todos os demais a correlação não é evidente. 
+
+### Gráficos de Diagnóstico
 
 
-$Y_{i}=$ `r round(mFit4.0sna$coefficients[1],3)` $\ + \ $ `r round(mFit4.0sna$coefficients[2],3)` $X_{1i} +$ `r round(mFit4.0sna$coefficients[3],3)` $X_{2i}+$ `r round(mFit4.0sna$coefficients[4],3)` $X_{3i}+$ `r round(mFit4.0sna$coefficients[5],3)` $X_{4i}+$ `r round(mFit4.0sna$coefficients[6],3)` $X_{5i}+$ `r round(mFit4.0sna$coefficients[7],3)` $X_{6i}+$ `r round(mFit4.0sna$coefficients[8],3)` $X_{7i}+$ `r round(mFit4.0sna$coefficients[9],3)` $X_{8i}+$ `r round(mFit4.0sna$coefficients[10],3)` $X_{9i}+$ `r round(mFit4.0sna$coefficients[11],3)` $X_{10i}+$ `r round(mFit4.0sna$coefficients[12],3)` $X_{11i}$  
+
+```{r }
+#| echo: false
+#| warning: false
+
+res_stu <- rstudent(mFit4.0sna) #para os resíduos estudentizados
+res_pad <- rstandard(mFit4.0sna) #para os resíduos padronizados
+res <- residuals(mFit4.0sna) #para os resíduos ordinários
 
 
-Onde:  
-$Y_{i}$ - Peso;  
-$X_{1i}$ - Colesterol total;  
-$X_{2i}$ - Glicose estabilizada;  
-$X_{3i}$ - Lipoproteína de alta densidade (colesterol bom);  
-$X_{4i}$ - Razão colesterol total e colesterol bom;  
-$X_{5i}$ - Hemoglobina glicada;  
-$X_{6i}$ - Idade (em anos);  
-$X_{7i}$ - Altura (em polegadas);  
-$X_{8i}$ - Pressão sanguínea sistólica (1ª medida);  
-$X_{9i}$ - Pressão sanguínea diastólica (1ª medida);  
-$X_{10i}$ - Cintura (em polegadas);  
-$X_{11i}$ - Quadril (em polegadas).   
+```
+
+
+```{r fig2:aju_stu}
+#| echo: false
+#| warning: false
+#| fig-height: 4
+#| fig-width: 7
+
+Y_hat <- X %*% betas
+Y_hat <- as.data.frame(as.numeric(Y_hat))
+d1 <- cbind(res_stu,Y_hat)
+colnames(d1) = c("res","y")
+
+### Ajuste do Modelo + Gráfico ----
+d1|>
+  ggplot(aes(x = y, y = res)) +
+  geom_point(
+    color = "#234B6E"
+    )+
+  labs(
+    title = "Figura 2: Valores Ajustados e Resíduos Studentizados",
+    x = 'Valores Ajustados',
+    y = 'Resíduos Studentizados'
+  )+
+  geom_smooth(
+    method=lm, se=T, formula = "y ~ x", color = "tomato")+
+  theme_minimal()+
+  scale_x_continuous()+
+  scale_y_continuous(
+    labels = scales::number_format(
+      big.mark = ".",
+      decimal.mark = ","
+    ))+
+    theme(legend.position = "none",
+          axis.line = element_line(size = 0.5, color = "#222222"))
+
+
+```
+
+
+```{r fig4:Cook}
+#| echo: false
+#| warning: false
+#| fig-height: 4
+#| fig-width: 7
+
+d1 <- cooks.distance(mFit4.0sna)
+d1 <- as.data.frame(cbind(1:377,d1))
+colnames(d1) <- c("x", "cook")
+### Ajuste do Modelo + Gráfico ----
+d1|>
+  ggplot(aes(x=x, y=cook)) +
+  geom_point(
+    color = "#234B6E"
+    )+
+  labs(
+    title = "Figura 4: Distância de Cook",
+    x = 'Valores',
+    y = 'Distância de Cook'
+  )+
+  geom_smooth(
+    method=lm, se=T, formula = "y ~ x", color = "tomato")+
+  theme_minimal()+
+  scale_x_continuous()+
+  scale_y_continuous(
+    labels = scales::number_format(
+      big.mark = ".",
+      decimal.mark = ","
+    ))+
+    theme(legend.position = "none",
+          axis.line = element_line(size = 0.5, color = "#222222"), 
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+
+```
+
+
+## Conclusões
