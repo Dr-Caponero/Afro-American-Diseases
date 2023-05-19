@@ -333,6 +333,7 @@ O modelo obtido pode ser representado por:
 n <- length(dados4$weight)
 Y <- as.matrix(dados4$weight)
 X <- as.matrix(dados4[,-8])
+X <- cbind(1,X)
 betas <- (solve(t(X) %*% X)) %*% t(X) %*% Y
 H = X %*% (solve(t(X) %*% X)) %*% t(X)
 J <- matrix(1,n,n)
@@ -345,7 +346,7 @@ R2_aju <- round(1 - (SQRes/(n - 12))/(SQTot/(n -1)),3)
 ```
 
 
-$Y_{i}=$ `r round(betas[1],3)` $X_{1i} +$ `r round(betas[2],3)` $X_{2i}$ `r round(betas[3],3)` $X_{3i}$ `r round(betas[4],3)` $X_{4i}$ `r round(betas[5],3)` $X_{5i}$ `r round(betas[6],3)` $X_{6i}+$ `r round(betas[7],3)` $X_{7i}$ `r round(betas[8],3)` $X_{8i}+$ `r round(betas[9],3)` $X_{9i}+$ `r round(betas[10],3)` $X_{10i}+$ `r round(betas[11],3)` $X_{11i}$   
+$Y_{i}=$`r round(betas[1],3)` $+$ `r round(betas[2],3)` $X_{1i} +$ `r round(betas[3],3)` $X_{2i}$ `r round(betas[4],3)` $X_{3i}+$ `r round(betas[5],3)` $X_{4i}$ `r round(betas[6],3)` $X_{5i}$ `r round(betas[7],3)` $X_{6i}+$ `r round(betas[8],3)` $X_{7i}$ `r round(betas[9],3)` $X_{8i}+$ `r round(betas[10],3)` $X_{9i}+$ `r round(betas[11],3)` $X_{10i}+$ `r round(betas[12],3)` $X_{11i}$   
 
 Onde:    
 $Y_{i}$ - Peso;  
@@ -380,7 +381,7 @@ Utilizando a estatística teste dada por:
 $$t= \dfrac{\hat \beta_j - \beta_j}{ep(\hat \beta_j)}$$
 Com base no valor tabelado de $t_{(2,5\%,365)}=$ `r round(qt(0.025, n-12), 3)` e realizados os calculos verificou-se os seguintes valores da estatística t:  
 
-```{r }
+```{r tab:sig}
 #| echo: false
 #| warning: false
 
@@ -388,31 +389,25 @@ Com base no valor tabelado de $t_{(2,5\%,365)}=$ `r round(qt(0.025, n-12), 3)` e
 sigma2_hat <- SQRes/(n-12)
 ep_betas <- sqrt(sigma2_hat*diag(solve(t(X) %*% X)))
 t <- t(betas)/ep_betas
-# k <- 1
-# rejeito <- NULL
-# for (i in 1:11){
-#   if (abs(t[i])> abs(qt(0.025,n-12))) {
-#     rejeito[k] = i
-#     k <- k + 1
-#   }
-# }
+
 t <-  as.data.frame(t(t))
 
-rownames(t) <-  c("Colesterol total", "Glicose estabilizada", 
+t <-  cbind(c("b", "Colesterol total", "Glicose estabilizada", 
                   "Lipoproteína de alta densidade", 
                   "Razão colesterol total e colesterol bom", 
                   "Hemoglobina glicada", "Idade", "Altura", 
                   "Pressão sanguínea sistólica",
                   "Pressão sanguínea diastólica",
-                  "Cintura","Quadril")
+                  "Cintura","Quadril"),t)
+t <- t[-1,]
 t|>
  kbl(
     caption = "Análise de Significância",
     digits = 3,
     format.args=list(big.mark=".", decimal.mark=","),
-    align = "c", 
-    col.names = "Estatística t",
-    row.names = T, 
+    align = "l", 
+    col.names = c("Exame", "Estatística t"),
+    row.names = F, 
     booktabs = T
   )|>
   column_spec(1, bold = T)|>
@@ -435,7 +430,8 @@ Um novo modelo sem essas variáveis pode ser representado por:
 
 n <- length(dados4$weight)
 Y <- as.matrix(dados4$weight)
-X <- as.matrix(dados4[,-c(3, 6, 8, 9, 11, 12)])
+X <- as.matrix(dados4[,-c(6, 7, 8, 11, 12)])
+X <- cbind(1,X)
 betas <- (solve(t(X) %*% X)) %*% t(X) %*% Y
 H = X %*% (solve(t(X) %*% X)) %*% t(X)
 J <- matrix(1,n,n)
@@ -448,19 +444,20 @@ R2_aju <- round(1 - (SQRes/(n - 12))/(SQTot/(n -1)),3)
 ```
 
 
-$Y_{i}=$ `r round(betas[1],3)` $X_{1i}^* +$ `r round(betas[2],3)` $X_{2i}^*+$ `r round(betas[3],3)` $X_{3i}^*+$ `r round(betas[4],3)` $X_{4i}^*+$ `r round(betas[5],3)` $X_{5i}^*+$ `r round(betas[6],3)` $X_{6i}^*$ 
+$Y_{i}^*=$ `r round(betas[1],3)`$+$ `r round(betas[2],3)` $X_{1i}^* +$ `r round(betas[3],3)` $X_{2i}^*+$ `r round(betas[4],3)` $X_{3i}^*+$ `r round(betas[5],3)` $X_{4i}^*+$ `r round(betas[6],3)` $X_{5i}^*+$ `r round(betas[7],3)` $X_{6i}^*+$ `r round(betas[8],3)` $X_{7i}^*$ 
+
 
 Onde:    
-$Y_{i}$ - Peso;  
+$Y_{i}^*$ - Peso;  
 $X_{1i}^*$ - Colesterol total;  
 $X_{2i}^*$ - Glicose estabilizada;  
-$X_{3i}^*$ - Razão colesterol total e colesterol bom;  
-$X_{4i}^*$ - Hemoglobina glicada;  
-$X_{5i}^*$ - Altura;  
-$X_{6i}^*$ - Pressão sanguínea diastólica.  
+$X_{3i}^*$ - Lipoproteína de alta densidade;
+$X_{4i}^*$ - Razão colesterol total e colesterol bom;  
+$X_{5i}^*$ - Hemoglobina glicada;
+$X_{6i}^*$ - Pressão sanguínea sistólica; 
+$X_{7i}^*$ - Pressão sanguínea diastólica. 
 
-
-
+Neste novo modelo o coeficiente de determinação calculado foi de $R^2=$ `r R2`, o que denota que `r R2*100`% da variância dos dados é explicada pelo modelo. A redução em relação ao modelo anterior se deve a retirada de cinco variáveis. A redução é muito expressiva indicando que a significância individual das variáveis não pode ser usada como único critério para sua eliminação do rol de variáveis explicaivas. Pode-se calcular o coeficiente de determinação ajustado igual a $R^2_a=$ `r R2_aju`
 
 ### Análise de Variâncias
 
@@ -570,7 +567,8 @@ res <- residuals(mFit4.0sna) #para os resíduos ordinários
 #| fig-width: 7
 
 Y_hat <- X %*% betas
-Y_hat <- as.data.frame(as.numeric(Y_hat))
+Y_hat <- as.data.frame(Y_hat)
+
 d1 <- cbind(res_stu,Y_hat)
 colnames(d1) = c("res","y")
 
@@ -634,8 +632,6 @@ d1|>
           axis.line = element_line(size = 0.5, color = "#222222"), 
           axis.text.x = element_blank(),
           axis.ticks.x = element_blank())
-
-
 ```
 
 
