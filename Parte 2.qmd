@@ -698,9 +698,9 @@ A Figura 8 acompanha os gráficos anteriores apresentando 6,9% de observações 
 #| echo: false
 #| warning: false
 #| fig-width: 7
-#| fig-height: 3
+#| fig-height: 9
 
-ols_plot_resid_pot(mFit4.0sna)
+car::crPlots(mFit4.0sna)
 ```
 
 
