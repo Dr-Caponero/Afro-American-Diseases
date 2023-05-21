@@ -41,8 +41,10 @@ if (!require(pacman)) install.packages("pacman")
 pacman::p_load(tidyverse,  janitor, stargazer,  sjmisc, summarytools,
                kableExtra, moments, ggpubr, formattable, gridExtra, 
                glue, corrplot, sessioninfo, readxl, writexl, ggthemes,
-               patchwork,  plotly, lmtest, olsrr, gglm, ggplot2,
-               tidymodels, GGally, skimr, performance)
+               patchwork,  plotly, lmtest, olsrr, gglm, ggplot2, rigr,
+               tidymodels, GGally, skimr, performance, gtsummary)
+
+
 
 summarytools::st_options(lang = "pt")
 options(OutDec=",") 
@@ -81,7 +83,7 @@ dados4 <- dados4|>stats::na.omit()
 ```
 
 
-## Introdução
+# Introdução
 
 O conjunto de dados a ser analisado, o mesmo trabalhado na parte 1 deste relatório, contém informações de 403 afro-americanos residentes no Estado da Virginia (EUA), entrevistados em um estudo referente à prevalência de obesidade, diabetes e outros fatores de risco cardiovasculares. As características apresentadas são:
 
@@ -119,9 +121,9 @@ coeficiente de determinação ajustado do modelo.
 (f) Gráfico de DfFit;  
 (g) Gráfico do COVRatio.  
 
-## Resultados
+# Resultados
 
-### Análise descritiva dos dados
+## Análise descritiva dos dados
 
 As análises prévias (primeira parte deste relatório) permitiram determinar que:   
 1- As características **Pressão sanguínea sistólica (2ª medida)** e **Pressão sanguínea diastólica (2ª medida)** possuem uma quantidade muito grande de dados ausentes, cerca de 65% de ausência de dados, portanto essas características foram descartadas.   
@@ -322,7 +324,7 @@ b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10 + b11 + b12 +
 
 Pode-se verificar pela Figura 1 que há diversos valores atipicos (*outlayers*), entretanto sem conhecimento especializado da fisiologia é temerário prescindir destas observações. Por outro lado, é possivel realizar uma análise estatística destes valores de forma a indicar aqueles tem maior influência sobre o modelo proposto e assim viabilizar um tratamento mais adequado a cada um deles. Este tratamento será realizado por meio de gráficos diagnósticos ao final deste estudo.
 
-### Modelo de Regressão Linear Multipla  
+## Modelo de Regressão Linear Multipla  
 
 O modelo obtido pode ser representado por:
 
@@ -368,7 +370,7 @@ Neste modelo o coeficiente de determinação calculado foi de $R^2=$ `r R2`, o q
 Da equação do modelo já se identifica que há fortes indícios de que a variável $X_{1i}$ (Colesterol Total) não apresenta qualquer significância para o ajuste do modelo. Desta forma, é conveniente avaliar a significância estatística de cada uma das variáveis a um nível de significância de 5%.
 
 
-### Variáveis Estatisticamente Significantes
+## Variáveis Estatisticamente Significantes
 
 
 Considerando um teste de hipótese para os parâmetros individuais do modelo podemos avaliar se: 
@@ -459,9 +461,9 @@ $X_{7i}^*$ - Pressão sanguínea diastólica.
 
 Neste novo modelo o coeficiente de determinação calculado foi de $R^2=$ `r R2`, o que denota que `r R2*100`% da variância dos dados é explicada pelo modelo. A redução em relação ao modelo anterior se deve a retirada de cinco variáveis. A redução é muito expressiva indicando que a significância individual das variáveis não pode ser usada como único critério para sua eliminação do rol de variáveis explicaivas. Pode-se calcular o coeficiente de determinação ajustado igual a $R^2_a=$ `r R2_aju`
 
-### Análise de Variâncias
+## Análise de Variâncias
 
-Realizando uma análise de variância com as variáveis significativas, é possível apresentar a tabela abaixo.  
+Uma outra forma de avaliar a importância de uma variável é realizando o teste ANOVA que verifica a plausibilidade de introduzir uma nova variável ao modelo de regressão. Realizando uma análise de variância com as variáveis iniciais é possível apresentar a tabela abaixo.  
 
 
 ```{r ajuste_mod}
@@ -471,8 +473,7 @@ Realizando uma análise de variância com as variáveis significativas, é poss�
 
 ### Ajuste do modelo ----
 # Com remoção de NAs
-mFit4.0sna <- lm(weight ~  chol + stab_glu + ratio + glyhb + height + bp_1d, data = dados4)
-
+mFit4.0sna <- lm(weight ~  chol + stab_glu + hdl + ratio + glyhb + age + height + bp_1s + bp_1d + waist + hip, data = dados4)
 ```
 
 
@@ -502,11 +503,14 @@ fit_anova4_sna<- fit_anova4_sna|>
 
 fit_anova4_sna[is.na(fit_anova4_sna)] <- ""
 
-fit_anova4_sna$term <- c("Colesterol total", "Glicose estabilizada",
-                     "Razão colesterol total e colesterol bom", 
-                     "Hemoglobina glicada", "Altura", 
-                     "Pressão sanguínea diastólica (1ª medida)", 
-                      "Resíduos")
+fit_anova4_sna$term <- c("Colesterol total", "Glicose estabilizada", 
+                        "Lipoproteína de alta densidade",  
+                        "Razão colesterol total e colesterol bom",  
+                        "Hemoglobina glicada", "Idade" , "Altura",  
+                        "Pressão sanguínea sistólica",  
+                        "Pressão sanguínea diastólica",  
+                        "Cintura",  "Quadril", "Resíduos") 
+
 
 for (i in 1:7){
   if (fit_anova4_sna[i,6]=="0,0000") {
@@ -542,97 +546,165 @@ fit_anova4_sna|>
 
 
 
-A análise da Tabela 3 permite avaliar que apenas para a razão colesterol total e colesterol bom e para a altura o peso do paciente está relacionado aos resultados obtidos de forma significativa. Para todos os demais a correlação não é evidente. 
-
-### Gráficos de Diagnóstico
+A análise da Tabela 3 permite avaliar que apenas a introgução das variáveis "razão colesterol total e colesterol bom" e "homoglobina glicada" não seriam convenientes para o modelo de regressão para o peso do paciente. 
 
 
+Um novo modelo sem essas variáveis pode ser representado por:
 
 ```{r }
 #| echo: false
 #| warning: false
 
-res_stu <- rstudent(mFit4.0sna) #para os resíduos estudentizados
-res_pad <- rstandard(mFit4.0sna) #para os resíduos padronizados
-res <- residuals(mFit4.0sna) #para os resíduos ordinários
+n <- length(dados4$weight)
+Y <- as.matrix(dados4$weight)
+X <- as.matrix(dados4[,-c(4, 5, 8)])
+X <- cbind(1,X)
+betas <- (solve(t(X) %*% X)) %*% t(X) %*% Y
+H = X %*% (solve(t(X) %*% X)) %*% t(X)
+J <- matrix(1,n,n)
+SQRes <- t(Y) %*% Y - t(betas) %*% t(X) %*% Y
+SQReg <- t(betas) %*% t(X) %*% Y - (1/n)*t(Y) %*% J %*% Y
+SQTot <- SQReg + SQRes
 
-
+R2 <- round(SQReg/SQTot,3)
+R2_aju <- round(1 - (SQRes/(n - 12))/(SQTot/(n -1)),3)
 ```
 
 
-```{r fig2:aju_stu}
+$Y_{i}^\# =$ `r round(betas[1],3)`$+$ `r round(betas[2],3)` $X_{1i}^\# +$ `r round(betas[3],3)` $X_{2i}^\#$ `r round(betas[4],3)` $X_{3i}^\#$ `r round(betas[5],3)` $X_{4i}^\#+$ `r round(betas[6],3)` $X_{5i}^\#$ `r round(betas[7],3)` $X_{6i}^\#+$ `r round(betas[8],3)` $X_{7i}^\#+$ `r round(betas[9],3)` $X_{8i}^\#+$ `r round(betas[10],3)` $X_{9i}^\#$ 
+
+
+Onde:    
+$Y_{i}^\#$ - Peso;  
+$X_{1i}^\#$ - Colesterol total;  
+$X_{2i}^\#$ - Glicose estabilizada;  
+$X_{3i}^\#$ - Lipoproteína de alta densidade;  
+$X_{4i}^\#$ - Idade;  
+$X_{5i}^\#$ - Altura;  
+$X_{6i}^\#$ - Pressão sanguínea sistólica;  
+$X_{7i}^\#$ - Pressão sanguínea diastólica;  
+$X_{8i}^\#$ - Cintura;  
+$X_{9i}^\#$ - Quadril.   
+
+Neste novo modelo o coeficiente de determinação calculado foi de $R^2=$ `r R2`, o que denota que `r R2*100`% da variância dos dados é explicada pelo modelo. A redução em relação ao modelo inicial é despresível, logo a retiradas das variáveis não afetou o modelo. Pode-se calcular o coeficiente de determinação ajustado igual a $R^2_a=$ `r R2_aju`
+
+
+
+## Gráficos de Diagnóstico
+
+A análise dos gráficos de diagnóstico permite avaliar as observações realizadas e conhecer a influência de cada uma delas para o madelo de regressão proposto. Assim, com base no último modelo, é possível fazer as seguintes análises:
+
+**Figura 2: Valores Ajustados e Resíduos Studentizados**
+
+```{r }
 #| echo: false
 #| warning: false
-#| fig-height: 4
 #| fig-width: 7
+#| fig-height: 3
+mFit4.0sna <- lm(weight ~  chol + stab_glu + hdl + age + height + bp_1s + bp_1d + waist + hip, data = dados4)
 
-Y_hat <- X %*% betas
-Y_hat <- as.data.frame(Y_hat)
+ols_plot_resid_stud(mFit4.0sna)
+```
+A Figura 2 demonstra que os resíduos estão todos dentro dos limites esperados, com exceção da observação 7 que por pouco ultrapassou o limite inferior. Não parece ser o caso de nenhuma intervenção por conta deste valor.  
 
-d1 <- cbind(res_stu,Y_hat)
-colnames(d1) = c("res","y")
-
-### Ajuste do Modelo + Gráfico ----
-d1|>
-  ggplot(aes(x = y, y = res)) +
-  geom_point(
-    color = "#234B6E"
-    )+
-  labs(
-    title = "Figura 2: Valores Ajustados e Resíduos Studentizados",
-    x = 'Valores Ajustados',
-    y = 'Resíduos Studentizados'
-  )+
-  geom_smooth(
-    method=lm, se=T, formula = "y ~ x", color = "tomato")+
-  theme_minimal()+
-  scale_x_continuous()+
-  scale_y_continuous(
-    labels = scales::number_format(
-      big.mark = ".",
-      decimal.mark = ","
-    ))+
-    theme(legend.position = "none",
-          axis.line = element_line(size = 0.5, color = "#222222"))
+\newpage
 
 
+**Figura 3: Valores Ajustados e Resíduos Padronizados.**
+
+```{r }
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 3
+ols_plot_resid_stand(mFit4.0sna)
 ```
 
+Já a análise da Figura 3, onde os resíduos foram padronizados, o número de observações que ultrapassaram os limites chegou a 4,8% do total o que é condizente com uma confiança de 95%.  
+
+**Figura 4: Análise dos quantis teóricos e amostrais**
+
+```{r fig3:analise_residuos}
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 3
+
+ols_plot_resid_qq(mFit4.0sna)
+```
+
+A Figura 4 apresentou um bom ajuste dos resíduos à distribuição normal, sendo um pouco pior nas caudas da distribuição por uma qauntidade pequena de pontos.  
+
+\newpage
+
+**Figura 5: Distância de Cook.**
 
 ```{r fig4:Cook}
 #| echo: false
 #| warning: false
-#| fig-height: 4
+#| fig-height: 3
 #| fig-width: 7
 
-d1 <- cooks.distance(mFit4.0sna)
-d1 <- as.data.frame(cbind(1:377,d1))
-colnames(d1) <- c("x", "cook")
-### Ajuste do Modelo + Gráfico ----
-d1|>
-  ggplot(aes(x=x, y=cook)) +
-  geom_point(
-    color = "#234B6E"
-    )+
-  labs(
-    title = "Figura 4: Distância de Cook",
-    x = 'Valores',
-    y = 'Distância de Cook'
-  )+
-  geom_smooth(
-    method=lm, se=T, formula = "y ~ x", color = "tomato")+
-  theme_minimal()+
-  scale_x_continuous()+
-  scale_y_continuous(
-    labels = scales::number_format(
-      big.mark = ".",
-      decimal.mark = ","
-    ))+
-    theme(legend.position = "none",
-          axis.line = element_line(size = 0.5, color = "#222222"), 
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+ols_plot_cooksd_chart(mFit4.0sna)
+```
+
+A analise da distância de Cook apresentada na Figura 5 demonstra que 25 (6,6%) observações tem uma distância expressiva, mas apenas sete deles estão acima da distância de 0,025. O tretamento destes pontos pode manter os resíduos dentro do esperado com uma confiança de 95%.  
+
+**Figura 6: Análise dos pontos de Alavanca e Resíduo Studentizado.**
+
+```{r }
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 3
+
+ols_plot_resid_lev(mFit4.0sna)
+```
+
+Pela Figura 6, observamos 15 observações que podem ser consideradas como *Outliers* e 21 como observações de alavanca, além de 3 com as duas características, o que representa um total de 10,3% das observações. Uma quantidade tão expressiva de dados não pode ser descartada sem o amparo de um especialista na área.  
+
+\newpage
+
+**Figura 7: DFBetas para as variáveis do modelo.**
+
+```{r }
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 8
+
+ols_plot_dfbetas(mFit4.0sna)
+```
+
+A Figura 7 apresenta os DFBetas para cada uma das variáveis utilizadas no modelo, com uma média de 6,1% de observações discrepantes com cerca de 4 observações críticas, isto é, valores mais extemos. O tratamento destas observações podem trazer o modelo para uma situação mais compatível com a confiança estabelecida.  
+
+**Figura 8: DfFit para as variáveis do modelo.**
+
+```{r }
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 3
+
+ols_plot_dffits(mFit4.0sna)
+```
+
+A Figura 8 acompanha os gráficos anteriores apresentando 6,9% de observações discrepantes.
+
+
+**Figura 9: COVRatio para as variáveis do modelo.**
+
+```{r }
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 3
+
+ols_plot_resid_pot(mFit4.0sna)
 ```
 
 
-## Conclusões
+# Conclusões
+
+Verificou-se que a análise de variâncias foi um teste mais poderoso para identificar variáveis desnecessárias ao modelo que a analise individual das significancias das variáveis ao modelo.   
+
