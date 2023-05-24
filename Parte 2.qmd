@@ -773,12 +773,12 @@ A Figura 8 acompanha os gráficos anteriores apresentando 6,9% de observações 
 car::crPlots(mFit4.0sna)
 ```
 
-Da Figura 9 verifica-se que as variáveis "Altura", "Cintura" e "Quadil" estão mais diretamente correlacionadas com os resíduos do "Peso", o que por sua vez indica que a imclusão de observações destas variáveis apresentam maior impacto ao modelo.
+Da Figura 9 verifica-se que as variáveis "Altura", "Cintura" e "Quadil" estão mais diretamente correlacionadas com os resíduos do "Peso", o que por sua vez indica que a inclusão de observações destas variáveis apresentam maior impacto ao modelo.
 
 
 ### Eliminação de observações anômalas
 
-Avaliando as observações que apresentaram comportamento anômalo nas figuras 2, 3, 5, 6, 7 e 8, chegamos as frequências apresentadas na Figura 10.
+Avaliando as observações que apresentaram comportamento anômalo nos diagnósticos dos valores ajustados e resíduos studentizados, valores ajustados e resíduos padronizados, distância de CooK, pontos de alavanca e *outliers*, análise de DfFit e todas as análises de BFBetas, chegamos as frequências de observações anômalas apresentadas na Figura 10.
 ```{r }
 #| echo: false
 #| warning: false
@@ -826,7 +826,7 @@ principais |>
    kable_material()
 
 ```
-Podemos intuir que essas são as observações com maior impacto negativo no modelo. Eliminando-as do conjunto de dados analizados chegamos a um novo modelo dado por:
+Podemos intuir que essas são as observações com maior impacto negativo no modelo. Logo, eliminando-as do conjunto de dados analizados chegamos a um novo modelo dado por:
 
 
 ```{r }
